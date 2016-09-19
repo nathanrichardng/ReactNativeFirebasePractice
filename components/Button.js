@@ -28,15 +28,25 @@ class Button extends Component {
 	     TouchableElement = TouchableNativeFeedback;
 	    }
 	    return (
-	      <TouchableElement
-	        style={this.props.buttonStyle}
-	        onPress={this.props.onPress}>
-	        <View>
-	          <Text style={this.props.textStyle}>{this.props.text}</Text>
-	        </View>
-	      </TouchableElement>        
+	      <View style={this.props.buttonStyle}>
+		      	<TouchableElement 
+		      		style={styles.submitButton}
+		      		onPress={this.props.onPress}>
+			        <View>
+			          <Text style={this.props.textStyle}>{this.props.text}</Text>
+			        </View>
+		      	</TouchableElement>  
+	      </View>      
 	    );
 	}
 }
+
+const styles = StyleSheet.create({
+  submitButton: {
+    flex: 1, 
+    flexDirection: 'column', 
+    justifyContent: 'center'
+  },
+});
 
 module.exports = Button;

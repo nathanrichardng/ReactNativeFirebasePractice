@@ -10,6 +10,7 @@ import React, { Component } from 'react';
 import ReactNative from 'react-native';
 const StatusBar = require('./StatusBar.js');
 const Button = require('./Button.js');
+const ModalButton = require('./ModalButton');
 const List = require('./List.js');
 
 //These are the components we are using from ReactNative import
@@ -79,19 +80,21 @@ class AddCommentView extends Component {
       <View style={styles.container}>
         <StatusBar title="Comments" />
         <List items={this.state.items} />
-        <View style={styles.comment}>
-          <TextInput
-              style={styles.commentText}
-              onChangeText={this._setCommentText}
-              value={this.state.comment} />
-        </View>
-        <View style={styles.submit}>
-          <Button
-            buttonStyle={styles.submitButton}
-            textStyle={styles.submitText}
-            onPress={this._submitComment}
-            text="Submit" />
-        </View>
+        <ModalButton
+          buttonStyle={styles.submit}
+          textStyle={styles.submitText}
+          text="Add Comment"
+          submitButtonStyle={styles.submit}
+          submitTextStyle={styles.submitText}
+          submitText="Submit Comment"
+          onSubmit={this._submitComment}>
+            <View style={styles.comment}>
+              <TextInput
+                  style={styles.commentText}
+                  onChangeText={this._setCommentText}
+                  value={this.state.comment} />
+            </View>
+        </ModalButton>
       </View>
     )
   }
