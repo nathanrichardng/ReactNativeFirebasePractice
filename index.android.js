@@ -8,6 +8,8 @@ import React, { Component } from 'react';
 import ReactNative from 'react-native';
 const firebase = require('firebase');
 const firebaseConfig = require('./firebaseConfig');
+const LoginPage = require('./components/LoginPage.js');
+const HomePage = require('./components/HomePage.js');
 
 //These are the components we are using from ReactNative import
 const {
@@ -26,91 +28,61 @@ const firebaseApp = firebase.initializeApp(firebaseConfig);
 
 class AwesomeProject extends Component {
   constructor(props) {
-      super(props);
-      this.itemsRef = firebaseApp.database().ref().child('items');
-      this.state = {
-        items: [{
-          title: "test init",
-          _key: "key",
-        }],
-      }
-  }
-
-  listenForItems(itemsRef) {
-    itemsRef.on('value', (snap) => {
-
-      // get children as an array
-      var items = [];
-      snap.forEach((child) => {
-        items.push({
-          title: child.val().title,
-          _key: child.key
-        });
-      });
-
-      this.setState({
-        items: items,
-      });
-
-    });
+    super(props);
+    this.state = {
+      view: 'LoginPage',
+      user: false,
+    } 
   }
 
   componentDidMount() {
-    this.listenForItems(this.itemsRef);
+    this._watchForAuthChange();
   }
 
-  renderItems() {
-    var itemNodes = this.state.items.map(function(item) {
-      return <Text key={item._key}>{item.title}</Text>
-    })
-    return itemNodes;
+  _watchForAuthChange() {
+    var showHomePage = function(user) {this.setState({view: 'HomePage', user: user.email})}.bind(this);
+    firebase.auth().onAuthStateChanged(function(user) {
+      if (user) {
+        showHomePage(user);
+      } else {
+        // No user is signed in.
+      }
+    });
+  }
+
+  _handleLogin(loginInfo) {
+    firebaseApp.auth().signInWithEmailAndPassword(loginInfo.email, loginInfo.password).catch(function(error) {
+      // Handle Errors here.
+      var errorCode = error.code;
+      var errorMessage = error.message;
+      window.alert("Error code " + error.code + " : " + error.message);
+      // ...
+    });
+  }
+
+  _handleSignUp(loginInfo) {
+    firebaseApp.auth().createUserWithEmailAndPassword(loginInfo.email, loginInfo.password).catch(function(error) {
+      // Handle Errors here.
+      var errorCode = error.code;
+      var errorMessage = error.message;
+      // ...
+    });
   }
 
   render() {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.big}>
-          Got it working on android!
-        </Text>
-        <Text style={styles.welcome}>
-          This is my first lesson in React Native!
-        </Text>
-        <Text style={styles.instructions}>
-          So far it seems pretty sweet.
-        </Text>
-        <Text style={styles.instructions}>
-          Press Cmd+R to reload,{'\n'}
-          Cmd+D or shake for dev menu
-        </Text>
-        {this.renderItems()}
-      </View>
-    );
+    if(this.state.view == 'LoginPage') {
+      return <LoginPage
+                login={this._handleLogin}
+                signUp={this._handleSignUp} />
+    }
+    else {
+      return (
+        <HomePage
+          user={this.state.user}
+          firebaseApp={firebaseApp} />
+      );
+    }
   }
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F5FCFF',
-  },
-  welcome: {
-    fontSize: 20,
-    textAlign: 'center',
-    margin: 10,
-  },
-  instructions: {
-    textAlign: 'center',
-    color: '#333333',
-    marginBottom: 5,
-  },
-  big: {
-    textAlign: 'center',
-    fontSize: 50,
-    backgroundColor: 'steelblue',
-    color: '#fff',
-  },
-});
 
 AppRegistry.registerComponent('AwesomeProject', () => AwesomeProject);

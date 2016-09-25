@@ -42,24 +42,29 @@ class ModalButton extends Component {
     this._hideModal();
   }
 
+  _onRequestClose() {
+    return;
+  }
+
   setModalVisible(visible) {
     this.setState({modalVisible: visible});
   }
 
   render() {
     return (
-      <View>
+      <View style={styles.fullWidth}>
         <Modal
           animationType={"slide"}
           transparent={false}
-          visible={this.state.modalVisible}>
+          visible={this.state.modalVisible}
+          onRequestClose={this._onRequestClose}>
             <View style={styles.container}>
               {this.props.children}
                 <Button 
                   buttonStyle={this.props.submitButtonStyle}
                   textStyle={this.props.submitTextStyle}
                   text={this.props.submitText}
-                  onPress={this._submitModal} />
+                  onPress={this.props.onSubmit} />
             </View>
         </Modal>
         <Button
@@ -79,21 +84,9 @@ const styles = {
     justifyContent: 'center',
     alignItems: 'center',
   },
-  buttonStyle: {
-    height: 50,
-    width: 300,
-    backgroundColor: 'steelblue',
-  },
-  textStyle: {
-    height: 50,
-    textAlign: 'center',
-    color: '#fff',
-  },
-  submit: {
-    backgroundColor: 'steelblue',
-    height: 50,
-    width: 300,
-  },
+  fullWidth: {
+    alignSelf: 'stretch',
+  }
 }
 
 module.exports = ModalButton;

@@ -11,7 +11,8 @@ import ReactNative from 'react-native';
 const StatusBar = require('./StatusBar.js');
 const Button = require('./Button.js');
 const ModalButton = require('./ModalButton');
-const List = require('./List.js');
+const CrumbList = require('./CrumbList.js');
+const GeolocationExample = require('./GeolocationExample.js');
 
 //These are the components we are using from ReactNative import
 const {
@@ -36,6 +37,8 @@ class AddCommentView extends Component {
       items: [
         {
           title: "test init",
+          latitude: "test latitude",
+          longitude: "test longitude",
           _key: "key",
         }
       ],
@@ -52,8 +55,10 @@ class AddCommentView extends Component {
 
   _submitComment() {
     if(this.state.comment.trim() == '') { return false; }
-    this.itemsRef.push({ title: this.state.comment });
+    const coords = this.refs.gps.getPosition().coords;
+    this.itemsRef.push({ title: this.state.comment, latitude: coords.latitude, longitude: coords.longitude });
     this.setState({ comment: '' });
+    this.refs.addCommentModal._hideModal();
   }
 
   listenForItems(itemsRef) {
@@ -62,8 +67,11 @@ class AddCommentView extends Component {
       // get children as an array
       var items = [];
       snap.forEach((child) => {
+        item = child.val();
         items.push({
-          title: child.val().title,
+          title: item.title,
+          latitude: item.latitude,
+          longitude: item.longitude,
           _key: child.key
         });
       });
@@ -79,17 +87,21 @@ class AddCommentView extends Component {
     return (
       <View style={styles.container}>
         <StatusBar title="Comments" />
-        <List items={this.state.items} />
+        <GeolocationExample ref="gps" />
+        <CrumbList items={this.state.items} />
         <ModalButton
-          buttonStyle={styles.submit}
+          ref="addCommentModal"
+          buttonStyle={styles.addCommentButton}
           textStyle={styles.submitText}
           text="Add Comment"
-          submitButtonStyle={styles.submit}
+          submitButtonStyle={styles.submitButton}
           submitTextStyle={styles.submitText}
           submitText="Submit Comment"
           onSubmit={this._submitComment}>
             <View style={styles.comment}>
               <TextInput
+                  autoFocus={true}
+                  onSubmitEditing={this._submitComment}
                   style={styles.commentText}
                   onChangeText={this._setCommentText}
                   value={this.state.comment} />
@@ -120,18 +132,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   submitButton: {
-    flex: 1, 
-    flexDirection: 'column', 
-    justifyContent: 'center'
-  },
-  submit: {
-    backgroundColor: 'steelblue',
-    height: 50,
+    backgroundColor: 'steelblue', 
+    justifyContent: 'center',
     width: 300,
+  },
+  addCommentButton: {
+    backgroundColor: 'steelblue',
+    justifyContent: 'center',
+    alignSelf: 'stretch',
   },
   submitText: {
     textAlign: 'center',
     color: '#fff',
+    paddingTop: 20,
+    paddingBottom: 20,
   },
 });
 
