@@ -34,8 +34,11 @@ class GeolocationExample extends React.Component {
       {enableHighAccuracy: true, timeout: 20000, maximumAge: 1000}
     );
     this.watchID = navigator.geolocation.watchPosition((position) => {
+      this.props.onLocationChange(position);
       var lastPosition = position;
+      //add call to update items
       this.setState({lastPosition});
+
     });
   }
 

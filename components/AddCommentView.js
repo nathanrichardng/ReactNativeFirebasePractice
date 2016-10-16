@@ -8,6 +8,7 @@
 
 import React, { Component } from 'react';
 import ReactNative from 'react-native';
+import GeoFire from 'geofire';
 const StatusBar = require('./StatusBar.js');
 const Button = require('./Button.js');
 const ModalButton = require('./ModalButton');
@@ -30,8 +31,12 @@ class AddCommentView extends Component {
   constructor(props) {
     super(props);
     this.itemsRef = props.firebaseApp.database().ref().child('items');
+    this.geofireRef = props.firebaseApp.database().ref().child('locations');
+    this.crumbsRef = props.firebaseApp.database().ref().child('crumbs').child('tester'); //change this to current user
+    this.geofire = new GeoFire(this.geofireRef);
     this._setCommentText = this._setCommentText.bind(this);
     this._submitComment = this._submitComment.bind(this);
+    this.getItems = this.getItems.bind(this);
     this.state = {
       comment: '',
       items: [
@@ -46,7 +51,7 @@ class AddCommentView extends Component {
   }
 
   componentDidMount() {
-    this.listenForItems(this.itemsRef);
+    //this.listenForItems(this.itemsRef);
   }
 
   _setCommentText(text) {
@@ -56,9 +61,32 @@ class AddCommentView extends Component {
   _submitComment() {
     if(this.state.comment.trim() == '') { return false; }
     const coords = this.refs.gps.getPosition().coords;
-    this.itemsRef.push({ title: this.state.comment, latitude: coords.latitude, longitude: coords.longitude });
+    const itemRef = this.itemsRef.push({ 
+      title: this.state.comment, latitude: coords.latitude, longitude: coords.longitude 
+    });
+    const itemKey = itemRef.key;
+    this.geofire.set(itemKey, [coords.latitude, coords.longitude]);
     this.setState({ comment: '' });
     this.refs.addCommentModal._hideModal();
+  }
+
+  getItems(position) {
+    const latitude = position.coords.latitude;
+    const longitude = position.coords.longitude;
+    const geoQuery = this.geofire.query({
+      center: [latitude, longitude],
+      radius: 1.609 //kilometers
+    });
+
+    const crumbsRef = this.crumbsRef;
+
+    //add any crumbs we come across into the users "seen" collection
+    //use this table for display of items to user
+    geoQuery.on('key_entered', function(key, location, distance) {
+      crumbsRef.child(key).update({
+        lastSeen: new Date(),
+      });
+    });
   }
 
   listenForItems(itemsRef) {
@@ -87,7 +115,7 @@ class AddCommentView extends Component {
     return (
       <View style={styles.container}>
         <StatusBar title="Comments" />
-        <GeolocationExample ref="gps" />
+        <GeolocationExample ref="gps" onLocationChange={this.getItems} />
         <CrumbList items={this.state.items} />
         <ModalButton
           ref="addCommentModal"
