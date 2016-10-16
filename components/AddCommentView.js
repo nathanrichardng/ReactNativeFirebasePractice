@@ -32,12 +32,13 @@ class AddCommentView extends Component {
     super(props);
     this.itemsRef = props.firebaseApp.database().ref().child('items');
     this.geofireRef = props.firebaseApp.database().ref().child('locations');
-    this.crumbsRef = props.firebaseApp.database().ref().child('crumbs').child('tester'); //change this to current user
+    this.userCrumbsRef = props.firebaseApp.database().ref().child('crumbs').child('tester'); //change this to current user
     this.geofire = new GeoFire(this.geofireRef);
     this._setCommentText = this._setCommentText.bind(this);
     this._submitComment = this._submitComment.bind(this);
     this.getItems = this.getItems.bind(this);
     this.state = {
+      ready: false,
       comment: '',
       items: [
         {
@@ -47,11 +48,12 @@ class AddCommentView extends Component {
           _key: "key",
         }
       ],
+      crumbs: {},
     } 
   }
 
   componentDidMount() {
-    //this.listenForItems(this.itemsRef);
+    this.listenForCrumbs(this.userCrumbsRef);
   }
 
   _setCommentText(text) {
@@ -71,43 +73,42 @@ class AddCommentView extends Component {
   }
 
   getItems(position) {
+    if(!this.state.ready) {
+      return true;
+    }
+
     const latitude = position.coords.latitude;
     const longitude = position.coords.longitude;
     const geoQuery = this.geofire.query({
       center: [latitude, longitude],
-      radius: 1.609 //kilometers
+      radius: 10000000.609 //kilometers
     });
 
-    const crumbsRef = this.crumbsRef;
+    const userCrumbs = {};
+    const userCrumbsRef = this.userCrumbsRef;
+
+    const crumbs = this.state.crumbs ? this.state.crumbs : {};
 
     //add any crumbs we come across into the users "seen" collection
     //use this table for display of items to user
     geoQuery.on('key_entered', function(key, location, distance) {
-      crumbsRef.child(key).update({
-        lastSeen: new Date(),
-      });
+      if(!crumbs[key]) {
+        //replace this with notification
+        window.alert('new crumb found for ' + key);
+        userCrumbsRef.child(key).update({
+          seenOn: new Date(),
+        });
+      }
     });
   }
 
-  listenForItems(itemsRef) {
-    itemsRef.on('value', (snap) => {
-
-      // get children as an array
-      var items = [];
-      snap.forEach((child) => {
-        item = child.val();
-        items.push({
-          title: item.title,
-          latitude: item.latitude,
-          longitude: item.longitude,
-          _key: child.key
-        });
-      });
-
+  listenForCrumbs(userCrumbsRef) {
+    userCrumbsRef.on('value', (snap) => {
+      var crumbs = snap.val();
       this.setState({
-        items: items,
+        crumbs: crumbs,
+        ready: true,
       });
-
     });
   }
 
